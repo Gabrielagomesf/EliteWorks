@@ -42,11 +42,19 @@ class _MainAppScreenState extends State<MainAppScreen> {
   int _totalResults = 0;
   bool _hasMoreResults = true;
 
+  List<Map<String, dynamic>> _featuredProfessionals = [];
+  List<Map<String, dynamic>> _nearbyProfessionals = [];
+  List<Map<String, dynamic>> _recommendedProfessionals = [];
+  bool _isLoadingFeatured = false;
+  bool _isLoadingNearby = false;
+  bool _isLoadingRecommended = false;
+
   @override
   void initState() {
     super.initState();
     _loadUser();
     _searchController.addListener(_onSearchChanged);
+    _loadHomeData();
   }
 
   @override
@@ -290,6 +298,87 @@ class _MainAppScreenState extends State<MainAppScreen> {
     });
   }
 
+  Future<void> _loadHomeData() async {
+    await Future.wait([
+      _loadFeaturedProfessionals(),
+      _loadNearbyProfessionals(),
+      _loadRecommendedProfessionals(),
+    ]);
+  }
+
+  Future<void> _loadFeaturedProfessionals() async {
+    setState(() {
+      _isLoadingFeatured = true;
+    });
+
+    try {
+      final results = await ProfessionalRepository.getFeaturedWithUserInfo(limit: 10);
+      if (mounted) {
+        setState(() {
+          _featuredProfessionals = results;
+          _isLoadingFeatured = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingFeatured = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadNearbyProfessionals() async {
+    setState(() {
+      _isLoadingNearby = true;
+    });
+
+    try {
+      final results = await ProfessionalRepository.searchWithUserInfo(
+        limit: 10,
+        skip: 0,
+      );
+      if (mounted) {
+        setState(() {
+          _nearbyProfessionals = results;
+          _isLoadingNearby = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingNearby = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadRecommendedProfessionals() async {
+    setState(() {
+      _isLoadingRecommended = true;
+    });
+
+    try {
+      final results = await ProfessionalRepository.searchWithUserInfo(
+        limit: 10,
+        skip: 0,
+        minRating: 4.0,
+      );
+      if (mounted) {
+        setState(() {
+          _recommendedProfessionals = results;
+          _isLoadingRecommended = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingRecommended = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isProfessional = _currentUser?['userType'] == 'profissional';
@@ -431,6 +520,29 @@ class _MainAppScreenState extends State<MainAppScreen> {
   }
 
   Widget _buildFeaturedProfessionalsSection() {
+    if (_isLoadingFeatured) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(
+            title: 'Profissionais em Destaque',
+            subtitle: 'Os mais bem avaliados',
+            onSeeAll: () {},
+          ),
+          SizedBox(
+            height: 220,
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (_featuredProfessionals.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -441,96 +553,44 @@ class _MainAppScreenState extends State<MainAppScreen> {
         ),
         SizedBox(
           height: 220,
-          child: ListView(
+          child: ListView.builder(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            children: [
-              ProfessionalCard(
-                name: 'João Silva',
-                rating: 4.9,
-                totalReviews: 245,
-                specialty: 'Especialista em Construção',
-                professionalId: 'prof1',
+            itemCount: _featuredProfessionals.length,
+            itemBuilder: (context, index) {
+              final item = _featuredProfessionals[index];
+              final professional = ProfessionalModel.fromJson(item['professional']);
+              final userData = item['user'] as Map<String, dynamic>?;
+
+              if (userData == null) return const SizedBox.shrink();
+
+              return ProfessionalCard(
+                name: userData['name'] ?? 'Profissional',
+                rating: professional.rating ?? 0,
+                totalReviews: professional.totalReviews ?? 0,
+                specialty: professional.categories.isNotEmpty
+                    ? professional.categories.first
+                    : 'Profissional',
+                professionalId: professional.id,
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => ProfessionalProfileScreen(
-                        professionalId: 'prof1',
-                        professionalName: 'João Silva',
-                        rating: 4.9,
-                        totalReviews: 245,
-                        specialty: 'Especialista em Construção',
+                        professionalId: professional.id,
+                        professionalName: userData['name'] ?? 'Profissional',
+                        rating: professional.rating ?? 0,
+                        totalReviews: professional.totalReviews ?? 0,
+                        specialty: professional.categories.isNotEmpty
+                            ? professional.categories.first
+                            : 'Profissional',
                       ),
                     ),
                   );
                 },
-              ),
-              ProfessionalCard(
-                name: 'Maria Santos',
-                rating: 4.8,
-                totalReviews: 189,
-                specialty: 'Design de Interiores',
-                professionalId: 'prof2',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProfessionalProfileScreen(
-                        professionalId: 'prof2',
-                        professionalName: 'Maria Santos',
-                        rating: 4.8,
-                        totalReviews: 189,
-                        specialty: 'Design de Interiores',
-                      ),
-                    ),
-                  );
-                },
-              ),
-              ProfessionalCard(
-                name: 'Pedro Costa',
-                rating: 4.7,
-                totalReviews: 156,
-                specialty: 'Elétrica Residencial',
-                professionalId: 'prof3',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProfessionalProfileScreen(
-                        professionalId: 'prof3',
-                        professionalName: 'Pedro Costa',
-                        rating: 4.7,
-                        totalReviews: 156,
-                        specialty: 'Elétrica Residencial',
-                      ),
-                    ),
-                  );
-                },
-              ),
-              ProfessionalCard(
-                name: 'Ana Oliveira',
-                rating: 4.9,
-                totalReviews: 203,
-                specialty: 'Limpeza Profissional',
-                professionalId: 'prof4',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProfessionalProfileScreen(
-                        professionalId: 'prof4',
-                        professionalName: 'Ana Oliveira',
-                        rating: 4.9,
-                        totalReviews: 203,
-                        specialty: 'Limpeza Profissional',
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
+              );
+            },
           ),
         ),
       ],
@@ -538,6 +598,29 @@ class _MainAppScreenState extends State<MainAppScreen> {
   }
 
   Widget _buildNearbyProfessionalsSection() {
+    if (_isLoadingNearby) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(
+            title: 'Profissionais Próximos',
+            subtitle: 'Na sua região',
+            onSeeAll: () {},
+          ),
+          SizedBox(
+            height: 220,
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (_nearbyProfessionals.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -548,75 +631,44 @@ class _MainAppScreenState extends State<MainAppScreen> {
         ),
         SizedBox(
           height: 220,
-          child: ListView(
+          child: ListView.builder(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            children: [
-              ProfessionalCard(
-                name: 'Carlos Mendes',
-                rating: 4.6,
-                totalReviews: 98,
-                specialty: 'Encanamento',
-                professionalId: 'prof5',
+            itemCount: _nearbyProfessionals.length,
+            itemBuilder: (context, index) {
+              final item = _nearbyProfessionals[index];
+              final professional = ProfessionalModel.fromJson(item['professional']);
+              final userData = item['user'] as Map<String, dynamic>?;
+
+              if (userData == null) return const SizedBox.shrink();
+
+              return ProfessionalCard(
+                name: userData['name'] ?? 'Profissional',
+                rating: professional.rating ?? 0,
+                totalReviews: professional.totalReviews ?? 0,
+                specialty: professional.categories.isNotEmpty
+                    ? professional.categories.first
+                    : 'Profissional',
+                professionalId: professional.id,
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => ProfessionalProfileScreen(
-                        professionalId: 'prof5',
-                        professionalName: 'Carlos Mendes',
-                        rating: 4.6,
-                        totalReviews: 98,
-                        specialty: 'Encanamento',
+                        professionalId: professional.id,
+                        professionalName: userData['name'] ?? 'Profissional',
+                        rating: professional.rating ?? 0,
+                        totalReviews: professional.totalReviews ?? 0,
+                        specialty: professional.categories.isNotEmpty
+                            ? professional.categories.first
+                            : 'Profissional',
                       ),
                     ),
                   );
                 },
-              ),
-              ProfessionalCard(
-                name: 'Fernanda Lima',
-                rating: 4.8,
-                totalReviews: 134,
-                specialty: 'Pintura',
-                professionalId: 'prof6',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProfessionalProfileScreen(
-                        professionalId: 'prof6',
-                        professionalName: 'Fernanda Lima',
-                        rating: 4.8,
-                        totalReviews: 134,
-                        specialty: 'Pintura',
-                      ),
-                    ),
-                  );
-                },
-              ),
-              ProfessionalCard(
-                name: 'Roberto Alves',
-                rating: 4.7,
-                totalReviews: 112,
-                specialty: 'Marcenaria',
-                professionalId: 'prof7',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProfessionalProfileScreen(
-                        professionalId: 'prof7',
-                        professionalName: 'Roberto Alves',
-                        rating: 4.7,
-                        totalReviews: 112,
-                        specialty: 'Marcenaria',
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
+              );
+            },
           ),
         ),
       ],
@@ -624,6 +676,29 @@ class _MainAppScreenState extends State<MainAppScreen> {
   }
 
   Widget _buildRecommendedSection() {
+    if (_isLoadingRecommended) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(
+            title: 'Recomendados para Você',
+            subtitle: 'Baseado no seu perfil',
+            onSeeAll: () {},
+          ),
+          SizedBox(
+            height: 220,
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (_recommendedProfessionals.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -634,75 +709,44 @@ class _MainAppScreenState extends State<MainAppScreen> {
         ),
         SizedBox(
           height: 220,
-          child: ListView(
+          child: ListView.builder(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            children: [
-              ProfessionalCard(
-                name: 'Lucas Ferreira',
-                rating: 4.9,
-                totalReviews: 278,
-                specialty: 'Tecnologia e TI',
-                professionalId: 'prof8',
+            itemCount: _recommendedProfessionals.length,
+            itemBuilder: (context, index) {
+              final item = _recommendedProfessionals[index];
+              final professional = ProfessionalModel.fromJson(item['professional']);
+              final userData = item['user'] as Map<String, dynamic>?;
+
+              if (userData == null) return const SizedBox.shrink();
+
+              return ProfessionalCard(
+                name: userData['name'] ?? 'Profissional',
+                rating: professional.rating ?? 0,
+                totalReviews: professional.totalReviews ?? 0,
+                specialty: professional.categories.isNotEmpty
+                    ? professional.categories.first
+                    : 'Profissional',
+                professionalId: professional.id,
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => ProfessionalProfileScreen(
-                        professionalId: 'prof8',
-                        professionalName: 'Lucas Ferreira',
-                        rating: 4.9,
-                        totalReviews: 278,
-                        specialty: 'Tecnologia e TI',
+                        professionalId: professional.id,
+                        professionalName: userData['name'] ?? 'Profissional',
+                        rating: professional.rating ?? 0,
+                        totalReviews: professional.totalReviews ?? 0,
+                        specialty: professional.categories.isNotEmpty
+                            ? professional.categories.first
+                            : 'Profissional',
                       ),
                     ),
                   );
                 },
-              ),
-              ProfessionalCard(
-                name: 'Juliana Rocha',
-                rating: 4.8,
-                totalReviews: 167,
-                specialty: 'Organização de Eventos',
-                professionalId: 'prof9',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProfessionalProfileScreen(
-                        professionalId: 'prof9',
-                        professionalName: 'Juliana Rocha',
-                        rating: 4.8,
-                        totalReviews: 167,
-                        specialty: 'Organização de Eventos',
-                      ),
-                    ),
-                  );
-                },
-              ),
-              ProfessionalCard(
-                name: 'Ricardo Souza',
-                rating: 4.7,
-                totalReviews: 145,
-                specialty: 'Jardinagem',
-                professionalId: 'prof10',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProfessionalProfileScreen(
-                        professionalId: 'prof10',
-                        professionalName: 'Ricardo Souza',
-                        rating: 4.7,
-                        totalReviews: 145,
-                        specialty: 'Jardinagem',
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
+              );
+            },
           ),
         ),
       ],

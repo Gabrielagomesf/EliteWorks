@@ -61,6 +61,14 @@ class ProfessionalRepository {
     return [];
   }
 
+  static Future<List<Map<String, dynamic>>> getFeaturedWithUserInfo({int limit = 10}) async {
+    final response = await ApiService.get('/professionals/featured?limit=$limit');
+    if (response['success'] == true && response['results'] != null) {
+      return List<Map<String, dynamic>>.from(response['results']);
+    }
+    return [];
+  }
+
   static Future<List<ProfessionalModel>> search({
     String? query,
     String? category,
