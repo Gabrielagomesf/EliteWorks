@@ -365,6 +365,46 @@ class PaymentController {
     }
   }
 
+  async createCardToken(req, res) {
+    try {
+      const { cardNumber, cardholderName, cardExpirationMonth, cardExpirationYear, securityCode, identificationType, identificationNumber } = req.body;
+
+      if (!cardNumber || !cardholderName || !cardExpirationMonth || !cardExpirationYear || !securityCode) {
+        return res.status(400).json({
+          success: false,
+          error: 'Dados do cartão incompletos',
+        });
+      }
+
+      const result = await mercadoPagoService.createCardToken({
+        cardNumber,
+        cardholderName,
+        cardExpirationMonth,
+        cardExpirationYear,
+        securityCode,
+        identificationType: identificationType || 'CPF',
+        identificationNumber: identificationNumber || '',
+      });
+
+      if (result.success) {
+        res.json({
+          success: true,
+          token: result.token,
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          error: result.error || 'Erro ao criar token do cartão',
+        });
+      }
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao criar token do cartão: ' + error.message,
+      });
+    }
+  }
+
   async webhook(req, res) {
     try {
       const { type, data } = req.body;
