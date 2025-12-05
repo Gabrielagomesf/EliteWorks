@@ -89,15 +89,87 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   Future<void> _loadUser() async {
-    final user = await AuthService.getCurrentUserBasic();
     setState(() {
-      _currentUser = user;
-      if (user != null) {
-        _nameController.text = user['name'] ?? '';
-        _emailController.text = user['email'] ?? '';
-        _phoneController.text = user['phone'] ?? '';
-      }
+      _isLoading = true;
     });
+
+    try {
+      final response = await UserApiService.getProfile();
+      
+      if (response['success'] == true && response['user'] != null) {
+        final userData = response['user'] as Map<String, dynamic>;
+        
+        setState(() {
+          _currentUser = {
+            'id': userData['id']?.toString() ?? '',
+            'name': userData['name'] ?? '',
+            'email': userData['email'] ?? '',
+            'userType': userData['userType'] ?? '',
+          };
+          
+          _nameController.text = userData['name']?.toString() ?? '';
+          _emailController.text = userData['email']?.toString() ?? '';
+          _phoneController.text = userData['phone']?.toString().trim() ?? '';
+          
+          if (userData['cpf'] != null) {
+            _cpfController.text = userData['cpf']?.toString() ?? '';
+          }
+          if (userData['birthDate'] != null) {
+            _birthDateController.text = userData['birthDate']?.toString() ?? '';
+          }
+          if (userData['gender'] != null) {
+            _genderController.text = userData['gender']?.toString() ?? '';
+          }
+          
+          if (userData['address'] != null && userData['address'] is Map) {
+            final address = userData['address'] as Map<String, dynamic>;
+            _zipCodeController.text = address['zipCode']?.toString() ?? '';
+            _addressController.text = address['address']?.toString() ?? '';
+            _numberController.text = address['number']?.toString() ?? '';
+            _complementController.text = address['complement']?.toString() ?? '';
+            _neighborhoodController.text = address['neighborhood']?.toString() ?? '';
+            _cityController.text = address['city']?.toString() ?? '';
+            _stateController.text = address['state']?.toString() ?? '';
+          }
+          
+          if (userData['bankData'] != null && userData['bankData'] is Map) {
+            final bankData = userData['bankData'] as Map<String, dynamic>;
+            _bankCodeController.text = bankData['bankCode']?.toString() ?? '';
+            _accountNumberController.text = bankData['accountNumber']?.toString() ?? '';
+            _accountDigitController.text = bankData['accountDigit']?.toString() ?? '';
+            _agencyController.text = bankData['agency']?.toString() ?? '';
+            _pixKeyController.text = bankData['pixKey']?.toString() ?? '';
+            _pixKeyTypeController.text = bankData['pixKeyType']?.toString() ?? '';
+          }
+          
+          if (userData['profileImage'] != null) {
+            _profileImagePath = userData['profileImage']?.toString();
+          }
+        });
+      } else {
+        final userBasic = await AuthService.getCurrentUserBasic();
+        setState(() {
+          _currentUser = userBasic;
+          if (userBasic != null) {
+            _nameController.text = userBasic['name'] ?? '';
+            _emailController.text = userBasic['email'] ?? '';
+          }
+        });
+      }
+    } catch (e) {
+      final userBasic = await AuthService.getCurrentUserBasic();
+      setState(() {
+        _currentUser = userBasic;
+        if (userBasic != null) {
+          _nameController.text = userBasic['name'] ?? '';
+          _emailController.text = userBasic['email'] ?? '';
+        }
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _searchCep() async {
