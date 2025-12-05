@@ -5,7 +5,7 @@ const authenticateToken = require('../middleware/auth');
 
 router.post('/', authenticateToken, paymentController.create.bind(paymentController));
 router.post('/card-token', authenticateToken, paymentController.createCardToken.bind(paymentController));
-router.post('/webhook', paymentController.webhook.bind(paymentController));
+// Nota: rota /webhook foi movida para server.js para capturar body raw
 router.get('/service/:serviceId', authenticateToken, paymentController.getByServiceId.bind(paymentController));
 router.get('/client', authenticateToken, paymentController.getByClientId.bind(paymentController));
 router.get('/professional', authenticateToken, paymentController.getByProfessionalId.bind(paymentController));

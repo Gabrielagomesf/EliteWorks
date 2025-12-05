@@ -15,11 +15,20 @@ const adRoutes = require('./routes/adRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const uploadController = require('./controllers/uploadController');
+const paymentController = require('./controllers/paymentController');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
+
+// Rota específica para webhook (precisa do body raw para validar assinatura)
+// DEVE estar ANTES do express.json() para capturar o body raw
+app.post('/api/payments/webhook', 
+  express.raw({ type: 'application/json', limit: '50mb' }),
+  paymentController.webhook.bind(paymentController)
+);
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 

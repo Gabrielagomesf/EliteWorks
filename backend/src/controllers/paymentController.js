@@ -405,8 +405,82 @@ class PaymentController {
     }
   }
 
+  _validateWebhookSignature(req) {
+    // Valida a assinatura secreta do webhook do Mercado Pago
+    const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
+    
+    if (!secret) {
+      console.warn('MERCADOPAGO_WEBHOOK_SECRET não configurado. Webhook não será validado.');
+      return true; // Permite em desenvolvimento se não estiver configurado
+    }
+
+    const signature = req.headers['x-signature'] || req.headers['x-signature-id'];
+    
+    if (!signature) {
+      console.error('Header x-signature não encontrado');
+      return false;
+    }
+
+    try {
+      // O Mercado Pago envia a assinatura no formato: sha256=hash ou apenas o hash
+      let receivedHash = signature;
+      if (signature.includes('=')) {
+        const [algorithm, hash] = signature.split('=');
+        if (algorithm !== 'sha256') {
+          console.error('Algoritmo de assinatura não suportado:', algorithm);
+          return false;
+        }
+        receivedHash = hash;
+      }
+
+      // Precisamos do body como string para calcular o hash
+      // Se o body for Buffer (raw), converte para string, senão serializa o JSON
+      let bodyString;
+      if (Buffer.isBuffer(req.body)) {
+        bodyString = req.body.toString('utf8');
+      } else {
+        bodyString = JSON.stringify(req.body);
+      }
+      
+      // Parse do body se ainda não foi parseado
+      if (Buffer.isBuffer(req.body)) {
+        try {
+          req.body = JSON.parse(bodyString);
+        } catch (e) {
+          // Ignora erro de parsing
+        }
+      }
+      
+      // Calcula o hash usando a assinatura secreta + body
+      const calculatedHash = crypto
+        .createHmac('sha256', secret)
+        .update(bodyString)
+        .digest('hex');
+
+      // Compara os hashes
+      const isValid = calculatedHash === receivedHash;
+      
+      if (!isValid) {
+        console.error('Assinatura do webhook inválida. Recebido:', receivedHash.substring(0, 10) + '...', 'Calculado:', calculatedHash.substring(0, 10) + '...');
+      }
+      
+      return isValid;
+    } catch (error) {
+      console.error('Erro ao validar assinatura do webhook:', error);
+      return false;
+    }
+  }
+
   async webhook(req, res) {
     try {
+      // Valida a assinatura secreta
+      if (!this._validateWebhookSignature(req)) {
+        return res.status(401).json({
+          success: false,
+          error: 'Assinatura do webhook inválida',
+        });
+      }
+
       const { type, data } = req.body;
 
       if (type === 'payment') {
