@@ -16,6 +16,9 @@ import '../models/user_model.dart';
 import 'profile_screen.dart';
 import 'professional_profile_screen.dart';
 import 'conversations_screen.dart';
+import 'all_professionals_screen.dart';
+import 'professional_dashboard_screen.dart';
+import 'professional_services_screen.dart';
 
 class MainAppScreen extends StatefulWidget {
   const MainAppScreen({super.key});
@@ -416,6 +419,9 @@ class _MainAppScreenState extends State<MainAppScreen> {
       case 0:
         return _buildHomeTab(isProfessional);
       case 1:
+        if (isProfessional) {
+          return const ProfessionalServicesScreen();
+        }
         return _buildSearchTab(isProfessional);
       case 2:
         return _buildMessagesTab();
@@ -427,13 +433,15 @@ class _MainAppScreenState extends State<MainAppScreen> {
   }
 
   Widget _buildHomeTab(bool isProfessional) {
+    if (isProfessional) {
+      return const ProfessionalDashboardScreen();
+    }
+
     return Column(
       children: [
         MainHeader(
           title: AppStrings.home,
-          subtitle: isProfessional
-              ? AppStrings.manageServices
-              : AppStrings.findProfessionals,
+          subtitle: AppStrings.findProfessionals,
         ),
         Expanded(
           child: SingleChildScrollView(
@@ -540,7 +548,49 @@ class _MainAppScreenState extends State<MainAppScreen> {
     }
 
     if (_featuredProfessionals.isEmpty) {
-      return const SizedBox.shrink();
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(
+            title: 'Profissionais em Destaque',
+            subtitle: 'Os mais bem avaliados',
+            onSeeAll: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AllProfessionalsScreen(
+                    filterType: 'featured',
+                  ),
+                ),
+              );
+            },
+          ),
+          SizedBox(
+            height: 220,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.star_outline,
+                    size: 48,
+                    color: AppColors.textTertiary,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Nenhum profissional em destaque disponível',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
     }
 
     return Column(
@@ -549,7 +599,16 @@ class _MainAppScreenState extends State<MainAppScreen> {
         SectionHeader(
           title: 'Profissionais em Destaque',
           subtitle: 'Os mais bem avaliados',
-          onSeeAll: () {},
+          onSeeAll: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AllProfessionalsScreen(
+                  filterType: 'featured',
+                ),
+              ),
+            );
+          },
         ),
         SizedBox(
           height: 220,
@@ -618,7 +677,49 @@ class _MainAppScreenState extends State<MainAppScreen> {
     }
 
     if (_nearbyProfessionals.isEmpty) {
-      return const SizedBox.shrink();
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(
+            title: 'Profissionais Próximos',
+            subtitle: 'Na sua região',
+            onSeeAll: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AllProfessionalsScreen(
+                    filterType: 'nearby',
+                  ),
+                ),
+              );
+            },
+          ),
+          SizedBox(
+            height: 220,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.location_off_outlined,
+                    size: 48,
+                    color: AppColors.textTertiary,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Nenhum profissional próximo a você disponível',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
     }
 
     return Column(
@@ -627,7 +728,16 @@ class _MainAppScreenState extends State<MainAppScreen> {
         SectionHeader(
           title: 'Profissionais Próximos',
           subtitle: 'Na sua região',
-          onSeeAll: () {},
+          onSeeAll: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AllProfessionalsScreen(
+                  filterType: 'nearby',
+                ),
+              ),
+            );
+          },
         ),
         SizedBox(
           height: 220,
@@ -683,7 +793,16 @@ class _MainAppScreenState extends State<MainAppScreen> {
           SectionHeader(
             title: 'Recomendados para Você',
             subtitle: 'Baseado no seu perfil',
-            onSeeAll: () {},
+            onSeeAll: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AllProfessionalsScreen(
+                    filterType: 'recommended',
+                  ),
+                ),
+              );
+            },
           ),
           SizedBox(
             height: 220,
@@ -696,7 +815,49 @@ class _MainAppScreenState extends State<MainAppScreen> {
     }
 
     if (_recommendedProfessionals.isEmpty) {
-      return const SizedBox.shrink();
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(
+            title: 'Recomendados para Você',
+            subtitle: 'Baseado no seu perfil',
+            onSeeAll: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AllProfessionalsScreen(
+                    filterType: 'recommended',
+                  ),
+                ),
+              );
+            },
+          ),
+          SizedBox(
+            height: 220,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.recommend_outlined,
+                    size: 48,
+                    color: AppColors.textTertiary,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Nenhum profissional recomendado disponível',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
     }
 
     return Column(
@@ -705,7 +866,16 @@ class _MainAppScreenState extends State<MainAppScreen> {
         SectionHeader(
           title: 'Recomendados para Você',
           subtitle: 'Baseado no seu perfil',
-          onSeeAll: () {},
+          onSeeAll: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AllProfessionalsScreen(
+                  filterType: 'recommended',
+                ),
+              ),
+            );
+          },
         ),
         SizedBox(
           height: 220,

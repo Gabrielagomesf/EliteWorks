@@ -1,3 +1,4 @@
+const bcrypt = require('bcryptjs');
 const userRepository = require('../repositories/userRepository');
 const professionalRepository = require('../repositories/professionalRepository');
 
@@ -77,6 +78,60 @@ class UserController {
       res.status(500).json({ 
         success: false, 
         error: 'Erro ao atualizar perfil: ' + error.message 
+      });
+    }
+  }
+
+  async changePassword(req, res) {
+    try {
+      const userId = req.user.userId;
+      const { currentPassword, newPassword } = req.body;
+
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({
+          success: false,
+          error: 'Senha atual e nova senha são obrigatórias',
+        });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({
+          success: false,
+          error: 'A nova senha deve ter pelo menos 6 caracteres',
+        });
+      }
+
+      const user = await userRepository.findById(userId);
+      
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'Usuário não encontrado',
+        });
+      }
+
+      const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+      
+      if (!isValidPassword) {
+        return res.status(401).json({
+          success: false,
+          error: 'Senha atual incorreta',
+        });
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await userRepository.update(userId, {
+        password: hashedPassword,
+      });
+
+      res.json({
+        success: true,
+        message: 'Senha alterada com sucesso',
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao alterar senha: ' + error.message,
       });
     }
   }

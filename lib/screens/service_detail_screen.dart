@@ -9,7 +9,11 @@ import '../services/repositories/service_repository.dart';
 import '../services/repositories/review_repository.dart';
 import '../services/api/upload_service.dart';
 import '../widgets/buttons/primary_button.dart';
+import '../services/auth_service.dart';
+import '../services/repositories/professional_repository.dart';
 import 'checkout_screen.dart';
+import 'service_detail_professional_screen.dart';
+import 'chat_screen.dart';
 
 class ServiceDetailScreen extends StatefulWidget {
   final String serviceId;
@@ -28,11 +32,38 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   final TextEditingController _commentController = TextEditingController();
   final ImagePicker _imagePicker = ImagePicker();
   List<File> _selectedImages = [];
+  Map<String, String>? _currentUser;
+  String? _professionalId;
+  bool _isProfessional = false;
 
   @override
   void initState() {
     super.initState();
+    _checkUserType();
     _loadService();
+  }
+
+  Future<void> _checkUserType() async {
+    try {
+      await AuthService.initialize();
+      final user = await AuthService.getCurrentUserBasic();
+      if (user != null) {
+        setState(() {
+          _currentUser = user;
+          _isProfessional = user['userType'] == 'profissional';
+        });
+
+        if (_isProfessional && user['id'] != null) {
+          final professional = await ProfessionalRepository.findByUserId(user['id']!);
+          if (professional != null) {
+            setState(() {
+              _professionalId = professional.id;
+            });
+          }
+        }
+      }
+    } catch (e) {
+    }
   }
 
   @override
@@ -237,9 +268,13 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
       );
     }
 
-    final canReview = _service!.status == 'completed' && _service!.completedDate != null;
-    final canSchedule = _service!.status == 'accepted' || _service!.status == 'pending';
-    final canCreatePayment = _service!.status == 'completed' && _service!.price != null && _service!.price! > 0;
+    if (_isProfessional && _professionalId != null && _service!.professionalId == _professionalId) {
+      return ServiceDetailProfessionalScreen(serviceId: widget.serviceId);
+    }
+
+    final canReview = _service!.status == 'completed' && _service!.completedDate != null && !_isProfessional;
+    final canSchedule = (_service!.status == 'accepted' || _service!.status == 'pending') && !_isProfessional;
+    final canCreatePayment = _service!.status == 'completed' && _service!.price != null && _service!.price! > 0 && !_isProfessional;
 
     return Scaffold(
       backgroundColor: AppColors.background,

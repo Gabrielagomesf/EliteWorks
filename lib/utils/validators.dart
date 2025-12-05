@@ -165,4 +165,104 @@ class Validators {
   static bool isValidPhone(String phoneValue) {
     return phone(phoneValue) == null;
   }
+
+  static String? cpf(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Por favor, insira o CPF';
+    }
+
+    final cleaned = value.replaceAll(RegExp(r'[^\d]'), '');
+
+    if (cleaned.length != 11) {
+      return 'CPF deve ter 11 dígitos';
+    }
+
+    // Validação básica de CPF (verifica se não são todos iguais)
+    if (RegExp(r'^(\d)\1{10}$').hasMatch(cleaned)) {
+      return 'CPF inválido';
+    }
+
+    return null;
+  }
+
+  static String? cep(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Por favor, insira o CEP';
+    }
+
+    final cleaned = value.replaceAll(RegExp(r'[^\d]'), '');
+
+    if (cleaned.length != 8) {
+      return 'CEP deve ter 8 dígitos';
+    }
+
+    return null;
+  }
+
+  static String? price(String? value) {
+    if (value == null || value.isEmpty) {
+      return null; // Preço é opcional
+    }
+
+    final cleaned = value.replaceAll(',', '.');
+    final price = double.tryParse(cleaned);
+
+    if (price == null) {
+      return 'Por favor, insira um valor válido';
+    }
+
+    if (price < 0) {
+      return 'O preço não pode ser negativo';
+    }
+
+    if (price > 999999.99) {
+      return 'O preço não pode ser maior que R\$ 999.999,99';
+    }
+
+    return null;
+  }
+
+  static String? bio(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null; // Bio é opcional
+    }
+
+    if (value.trim().length > 500) {
+      return 'A bio deve ter no máximo 500 caracteres';
+    }
+
+    return null;
+  }
+
+  static String? coverageArea(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null; // Área de cobertura é opcional
+    }
+
+    if (value.trim().length < 3) {
+      return 'A área de cobertura deve ter pelo menos 3 caracteres';
+    }
+
+    if (value.trim().length > 100) {
+      return 'A área de cobertura deve ter no máximo 100 caracteres';
+    }
+
+    return null;
+  }
+
+  static String? experience(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null; // Experiência é opcional
+    }
+
+    if (value.trim().length < 10) {
+      return 'A experiência deve ter pelo menos 10 caracteres';
+    }
+
+    if (value.trim().length > 1000) {
+      return 'A experiência deve ter no máximo 1000 caracteres';
+    }
+
+    return null;
+  }
 }

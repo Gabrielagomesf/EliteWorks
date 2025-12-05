@@ -15,6 +15,14 @@ const serviceSchema = new mongoose.Schema({
   scheduledDate: { type: Date },
   completedDate: { type: Date },
   images: [{ type: String }],
+  location: {
+    address: { type: String },
+    city: { type: String },
+    state: { type: String },
+    zipCode: { type: String },
+    latitude: { type: Number },
+    longitude: { type: Number },
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

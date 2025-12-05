@@ -10,6 +10,9 @@ class ProfessionalModel {
   final String? coverageArea;
   final bool isVerified;
   final Map<String, dynamic>? availability;
+  final double? hourlyRate;
+  final String? experience;
+  final List<String>? certifications;
 
   ProfessionalModel({
     required this.id,
@@ -23,6 +26,9 @@ class ProfessionalModel {
     this.coverageArea,
     this.isVerified = false,
     this.availability,
+    this.hourlyRate,
+    this.experience,
+    this.certifications,
   });
 
   factory ProfessionalModel.fromJson(Map<String, dynamic> json) {
@@ -47,7 +53,10 @@ class ProfessionalModel {
           : null,
       coverageArea: json['coverageArea'],
       isVerified: json['isVerified'] ?? false,
-      availability: json['availability'],
+      availability: json['availability'] != null ? Map<String, dynamic>.from(json['availability']) : null,
+      hourlyRate: json['hourlyRate'] != null ? (json['hourlyRate'] as num).toDouble() : null,
+      experience: json['experience'],
+      certifications: json['certifications'] != null ? List<String>.from(json['certifications']) : null,
     );
   }
 
@@ -63,6 +72,9 @@ class ProfessionalModel {
       if (coverageArea != null) 'coverageArea': coverageArea,
       'isVerified': isVerified,
       if (availability != null) 'availability': availability,
+      if (hourlyRate != null) 'hourlyRate': hourlyRate,
+      if (experience != null) 'experience': experience,
+      if (certifications != null) 'certifications': certifications,
     };
   }
 }

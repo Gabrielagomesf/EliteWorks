@@ -13,9 +13,12 @@ import '../widgets/headers/main_header.dart';
 import '../widgets/drawer/custom_drawer.dart';
 import '../utils/validators.dart';
 import '../services/cep_service.dart';
+import '../services/api/upload_service.dart';
 import 'package:intl/intl.dart';
 import 'home_screen.dart';
 import 'create_work_screen.dart';
+import 'edit_professional_profile_screen.dart';
+import 'my_ads_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -322,6 +325,34 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       // Determinar qual aba está sendo salva baseado no formKey
       if (formKey == _personalInfoFormKey) {
         // Salvar informações pessoais
+        
+        // Se houver uma nova foto selecionada, fazer upload primeiro
+        if (_profileImageFile != null && _profileImagePath != null && !_profileImagePath!.startsWith('http')) {
+          // Faz upload da imagem
+          final uploadResult = await UploadService.uploadProfileImage(_profileImageFile!);
+          
+          if (uploadResult['success'] == true && uploadResult['imageUrl'] != null) {
+            // Usa a URL retornada pelo servidor
+            updates['profileImage'] = uploadResult['imageUrl'];
+          } else {
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Erro ao fazer upload da foto: ${uploadResult['error'] ?? 'Erro desconhecido'}'),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+            return;
+          }
+        } else if (_profileImagePath != null && _profileImagePath!.startsWith('http')) {
+          // Se já for uma URL (já foi feito upload antes), manter
+          updates['profileImage'] = _profileImagePath;
+        }
+        
         updates['name'] = _nameController.text.trim();
         updates['phone'] = _phoneController.text.trim();
         if (_cpfController.text.isNotEmpty) {
@@ -332,9 +363,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         }
         if (_genderController.text.isNotEmpty) {
           updates['gender'] = _genderController.text.trim();
-        }
-        if (_profileImagePath != null) {
-          updates['profileImage'] = _profileImagePath;
         }
       } else if (formKey == _addressFormKey) {
         // Salvar endereço
@@ -507,35 +535,87 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   Widget _buildProfessionalActions() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       color: Colors.white,
-      child: ElevatedButton.icon(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const CreateWorkScreen(),
-            ),
-          );
-          if (result == true && mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Trabalho adicionado ao portfólio!'),
-                backgroundColor: AppColors.success,
+      child: Column(
+        children: [
+          ElevatedButton.icon(
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CreateWorkScreen(),
+                ),
+              );
+              if (result == true && mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Trabalho adicionado ao portfólio!'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              }
+            },
+            icon: const Icon(Icons.add_photo_alternate),
+            label: const Text('Criar Trabalho/Portfólio'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-            );
-          }
-        },
-        icon: const Icon(Icons.add_photo_alternate),
-        label: const Text('Criar Trabalho/Portfólio'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            ),
           ),
-        ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EditProfessionalProfileScreen(),
+                      ),
+                    );
+                    if (result == true && mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Perfil atualizado!'),
+                          backgroundColor: AppColors.success,
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.edit),
+                  label: const Text('Editar Perfil'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MyAdsScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.campaign),
+                  label: const Text('Meus Anúncios'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -552,9 +632,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 radius: screenWidth * 0.12,
                 backgroundColor: AppColors.primary,
                 backgroundImage: _profileImageFile != null
-                    ? FileImage(_profileImageFile!)
-                    : null,
-                child: _profileImageFile == null
+                    ? FileImage(_profileImageFile!) as ImageProvider?
+                    : (_profileImagePath != null && _profileImagePath!.startsWith('http'))
+                        ? NetworkImage(_profileImagePath!)
+                        : null,
+                child: (_profileImageFile == null && (_profileImagePath == null || !_profileImagePath!.startsWith('http')))
                     ? Text(
                         _currentUser?['name']?.substring(0, 1).toUpperCase() ?? 'U',
                         style: GoogleFonts.inter(

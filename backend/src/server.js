@@ -51,6 +51,24 @@ app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'EliteWorks API está funcionando' });
 });
 
+// Middleware de tratamento de erros (deve vir depois de todas as rotas)
+app.use((err, req, res, next) => {
+  console.error('Erro não tratado:', err);
+  res.status(err.status || 500).json({
+    success: false,
+    error: err.message || 'Erro interno do servidor',
+  });
+});
+
+// Rota 404 (deve vir por último)
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: 'Rota não encontrada',
+    path: req.path,
+  });
+});
+
 connectDB()
   .then(() => {
     app.listen(PORT, () => {

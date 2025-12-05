@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "496075515042",
+    "project_id": "eliteworks-66efd",
+    "storage_bucket": "eliteworks-66efd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:496075515042:android:d8e982a3b616596a2f63fb",
+        "android_client_info": {
+          "package_name": "com.example.eliteworks"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB5Syhgfn0vXxUqBhf_Q7Jz2blZpFx3U6c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

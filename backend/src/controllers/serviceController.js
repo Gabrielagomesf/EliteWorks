@@ -8,7 +8,26 @@ class ServiceController {
   async create(req, res) {
     try {
       const serviceData = req.body;
+      serviceData.clientId = req.user.userId;
       const service = await serviceRepository.create(serviceData);
+
+      const servicePopulated = await serviceRepository.findById(service._id.toString());
+      const professional = await Professional.findById(service.professionalId).populate('userId');
+      
+      if (professional && professional.userId) {
+        await notificationRepository.create({
+          userId: professional.userId._id.toString(),
+          title: 'Nova solicitação de serviço',
+          message: `Você recebeu uma nova solicitação: ${service.title}`,
+          type: 'service',
+          relatedId: service._id.toString(),
+          data: { 
+            status: 'pending',
+            serviceTitle: service.title,
+            clientId: service.clientId.toString(),
+          },
+        });
+      }
 
       res.status(201).json({
         success: true,
@@ -23,6 +42,8 @@ class ServiceController {
           status: service.status,
           scheduledDate: service.scheduledDate,
           completedDate: service.completedDate,
+          location: service.location || null,
+          images: service.images || [],
           createdAt: service.createdAt,
         },
       });
@@ -59,6 +80,8 @@ class ServiceController {
           status: service.status,
           scheduledDate: service.scheduledDate,
           completedDate: service.completedDate,
+          location: service.location || null,
+          images: service.images || [],
           createdAt: service.createdAt,
         },
       });
@@ -88,6 +111,8 @@ class ServiceController {
           status: s.status,
           scheduledDate: s.scheduledDate,
           completedDate: s.completedDate,
+          location: s.location || null,
+          images: s.images || [],
           createdAt: s.createdAt,
         })),
       });
@@ -117,6 +142,8 @@ class ServiceController {
           status: s.status,
           scheduledDate: s.scheduledDate,
           completedDate: s.completedDate,
+          location: s.location || null,
+          images: s.images || [],
           createdAt: s.createdAt,
         })),
       });
@@ -163,6 +190,8 @@ class ServiceController {
           status: service.status,
           scheduledDate: service.scheduledDate,
           completedDate: service.completedDate,
+          location: service.location || null,
+          images: service.images || [],
           createdAt: service.createdAt,
         },
       });
@@ -188,7 +217,7 @@ class ServiceController {
         case 'accepted':
           // Notificar o cliente que o serviço foi aceito
           await notificationRepository.create({
-            userId: clientId,
+            userId: service.clientId._id ? service.clientId._id.toString() : service.clientId.toString(),
             title: 'Serviço aceito',
             message: `${professionalUser.name} aceitou sua solicitação de serviço: ${serviceTitle}`,
             type: 'service',
@@ -200,7 +229,7 @@ class ServiceController {
         case 'in_progress':
           // Notificar o cliente que o serviço está em andamento
           await notificationRepository.create({
-            userId: clientId,
+            userId: service.clientId._id ? service.clientId._id.toString() : service.clientId.toString(),
             title: 'Serviço em andamento',
             message: `${professionalUser.name} iniciou o serviço: ${serviceTitle}`,
             type: 'service',
@@ -213,7 +242,7 @@ class ServiceController {
           // Notificar ambos
           const clientName = client.name || 'Cliente';
           await notificationRepository.create({
-            userId: clientId,
+            userId: service.clientId._id ? service.clientId._id.toString() : service.clientId.toString(),
             title: 'Serviço concluído',
             message: `O serviço "${serviceTitle}" foi concluído por ${professionalUser.name}`,
             type: 'service',

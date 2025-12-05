@@ -6,6 +6,10 @@ import '../widgets/headers/main_header.dart';
 import '../widgets/drawer/custom_drawer.dart';
 import '../services/auth_service.dart';
 import '../utils/email_launcher.dart';
+import 'contact_screen.dart';
+import 'privacy_policy_screen.dart';
+import 'terms_of_service_screen.dart';
+import 'security_screen.dart';
 
 class HelpScreen extends StatefulWidget {
   const HelpScreen({super.key});
@@ -55,6 +59,26 @@ class _HelpScreenState extends State<HelpScreen> {
           'question': 'Como me tornar um profissional?',
           'answer': 'Ao se cadastrar, escolha a opção "Profissional". Complete seu perfil, adicione suas categorias de serviço e comece a receber propostas de clientes.',
         },
+        {
+          'question': 'Quais formas de pagamento são aceitas?',
+          'answer': 'Aceitamos PIX, cartão de crédito (débito automático) e boleto bancário. Todas as transações são processadas de forma segura.',
+        },
+        {
+          'question': 'O app é gratuito?',
+          'answer': 'Sim, o EliteWorks é totalmente gratuito para clientes. Profissionais podem oferecer seus serviços sem custos de cadastro.',
+        },
+        {
+          'question': 'Como reportar um problema?',
+          'answer': 'Você pode reportar problemas através da tela de Contato ou enviando um email diretamente. Nossa equipe responderá em até 48 horas úteis.',
+        },
+        {
+          'question': 'Meus dados estão seguros?',
+          'answer': 'Sim! Utilizamos criptografia de ponta e estamos em conformidade com a LGPD. Seus dados estão completamente protegidos.',
+        },
+        {
+          'question': 'Como alterar minha senha?',
+          'answer': 'Acesse Configurações > Alterar Senha. Você precisará informar sua senha atual e definir uma nova senha.',
+        },
       ]);
     });
   }
@@ -82,6 +106,56 @@ class _HelpScreenState extends State<HelpScreen> {
                 const SizedBox(height: 24),
                 _buildSectionTitle('Perguntas Frequentes'),
                 ..._faqs.map((faq) => _buildFAQItem(faq)),
+                const SizedBox(height: 24),
+                _buildSectionTitle('Documentos e Políticas'),
+                _buildDocumentTile(
+                  'Política de Privacidade',
+                  Icons.privacy_tip_outlined,
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PrivacyPolicyScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _buildDocumentTile(
+                  'Termos de Serviço',
+                  Icons.description_outlined,
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TermsOfServiceScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _buildDocumentTile(
+                  'Segurança',
+                  Icons.security_outlined,
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SecurityScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _buildDocumentTile(
+                  'Contato',
+                  Icons.contact_support_outlined,
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ContactScreen(),
+                      ),
+                    );
+                  },
+                ),
               ],
             ),
           ),
@@ -129,14 +203,28 @@ class _HelpScreenState extends State<HelpScreen> {
                 const SizedBox(width: 12),
                 _buildContactButton(
                   Icons.chat,
-                  'Chat',
-                  () {},
+                  'Contato',
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ContactScreen(),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(width: 12),
                 _buildContactButton(
-                  Icons.phone,
-                  'Telefone',
-                  () {},
+                  Icons.info,
+                  'Sobre',
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ContactScreen(),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -246,6 +334,34 @@ class _HelpScreenState extends State<HelpScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDocumentTile(String title, IconData icon, VoidCallback onTap) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            icon,
+            color: AppColors.primary,
+            size: 24,
+          ),
+        ),
+        title: Text(
+          title,
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+        onTap: onTap,
       ),
     );
   }

@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'dart:io';
 import 'constants/app_colors.dart';
 import 'constants/app_strings.dart';
@@ -19,6 +21,19 @@ void main() async {
   } catch (e) {
     if (kDebugMode) {
       print('Aviso: Arquivo .env não encontrado. Usando configurações padrão.');
+    }
+  }
+  
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    if (kDebugMode) {
+      print('Firebase inicializado com sucesso!');
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      print('Erro ao inicializar Firebase: $e');
     }
   }
   

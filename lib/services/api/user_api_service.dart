@@ -9,6 +9,20 @@ class UserApiService {
     return await ApiService.put('/users/profile', updates, requiresAuth: true);
   }
 
+  static Future<Map<String, dynamic>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    return await ApiService.put(
+      '/users/change-password',
+      {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      },
+      requiresAuth: true,
+    );
+  }
+
   static Future<Map<String, dynamic>> deleteAccount() async {
     return await ApiService.delete('/users/account', requiresAuth: true);
   }

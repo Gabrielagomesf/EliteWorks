@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_strings.dart';
 import '../widgets/headers/main_header.dart';
 import '../widgets/drawer/custom_drawer.dart';
 import '../services/auth_service.dart';
 import 'home_screen.dart';
+import 'change_password_screen.dart';
+import 'privacy_policy_screen.dart';
+import 'terms_of_service_screen.dart';
+import 'security_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -24,6 +29,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _loadUser();
+    _loadNotificationSettings();
   }
 
   Future<void> _loadUser() async {
@@ -31,6 +37,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _currentUser = user;
     });
+  }
+
+  Future<void> _loadNotificationSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
+      _emailNotifications = prefs.getBool('email_notifications') ?? true;
+      _pushNotifications = prefs.getBool('push_notifications') ?? true;
+    });
+  }
+
+  Future<void> _saveNotificationSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notifications_enabled', _notificationsEnabled);
+    await prefs.setBool('email_notifications', _emailNotifications);
+    await prefs.setBool('push_notifications', _pushNotifications);
   }
 
   @override
@@ -57,40 +79,82 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   'Notificações',
                   'Receber notificações do app',
                   _notificationsEnabled,
-                  (value) => setState(() => _notificationsEnabled = value),
+                  (value) {
+                    setState(() => _notificationsEnabled = value);
+                    _saveNotificationSettings();
+                  },
                 ),
                 _buildSwitchTile(
                   'Notificações por Email',
                   'Receber notificações por email',
                   _emailNotifications,
-                  (value) => setState(() => _emailNotifications = value),
+                  (value) {
+                    setState(() => _emailNotifications = value);
+                    _saveNotificationSettings();
+                  },
                   enabled: _notificationsEnabled,
                 ),
                 _buildSwitchTile(
                   'Notificações Push',
                   'Receber notificações push',
                   _pushNotifications,
-                  (value) => setState(() => _pushNotifications = value),
+                  (value) {
+                    setState(() => _pushNotifications = value);
+                    _saveNotificationSettings();
+                  },
                   enabled: _notificationsEnabled,
                 ),
                 const SizedBox(height: 24),
                 _buildSectionTitle('Privacidade'),
                 _buildListTile(
-                  'Privacidade e Segurança',
-                  Icons.lock_outline,
-                  () {},
+                  'Política de Privacidade',
+                  Icons.privacy_tip_outlined,
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PrivacyPolicyScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _buildListTile(
-                  'Dados e Armazenamento',
-                  Icons.storage_outlined,
-                  () {},
+                  'Termos de Serviço',
+                  Icons.description_outlined,
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TermsOfServiceScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _buildListTile(
+                  'Segurança',
+                  Icons.security_outlined,
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SecurityScreen(),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 24),
                 _buildSectionTitle('Conta'),
                 _buildListTile(
                   'Alterar Senha',
                   Icons.vpn_key_outlined,
-                  () {},
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ChangePasswordScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _buildListTile(
                   'Excluir Conta',
@@ -377,6 +441,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     }
   }
+
 }
 
 

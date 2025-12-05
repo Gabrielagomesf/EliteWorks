@@ -45,5 +45,17 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Precisamos da sua localização para encontrar profissionais próximos e facilitar o agendamento de serviços.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Precisamos da sua localização para encontrar profissionais próximos mesmo quando o app estiver em segundo plano.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Precisamos da sua localização para encontrar profissionais próximos e facilitar o agendamento de serviços.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Precisamos acessar a câmera para tirar fotos do seu perfil e dos serviços.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Precisamos acessar suas fotos para selecionar imagens para o perfil e serviços.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Precisamos salvar fotos do app na sua galeria.</string>
 </dict>
 </plist>

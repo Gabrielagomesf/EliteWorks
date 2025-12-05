@@ -7,8 +7,10 @@ import '../widgets/headers/main_header.dart';
 import '../widgets/drawer/custom_drawer.dart';
 import '../services/auth_service.dart';
 import '../services/repositories/service_repository.dart';
+import '../services/repositories/professional_repository.dart';
 import '../models/service_model.dart';
 import 'service_detail_screen.dart';
+import 'service_detail_professional_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -47,7 +49,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
       final user = await AuthService.getCurrentUserBasic();
       
       if (user != null && user['id'] != null) {
-        final services = await ServiceRepository.findByClientId(user['id']!);
+        List<ServiceModel> services = [];
+        
+        if (user['userType'] == 'profissional') {
+          final professional = await ProfessionalRepository.findByUserId(user['id']!);
+          if (professional != null) {
+            services = await ServiceRepository.findByProfessionalId(professional.id);
+          }
+        } else {
+          services = await ServiceRepository.findByClientId(user['id']!);
+        }
+        
         setState(() {
           _services = services;
           _isLoading = false;
@@ -77,7 +89,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
         children: [
           MainHeader(
             title: AppStrings.history,
-            subtitle: 'Seu histórico de serviços',
+            subtitle: _currentUser?['userType'] == 'profissional'
+                ? 'Histórico de serviços recebidos'
+                : 'Seu histórico de serviços',
           ),
           _buildFilterBar(),
           Expanded(
@@ -190,7 +204,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
               final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ServiceDetailScreen(serviceId: service.id),
+                  builder: (context) => _currentUser?['userType'] == 'profissional'
+                      ? ServiceDetailProfessionalScreen(serviceId: service.id)
+                      : ServiceDetailScreen(serviceId: service.id),
                 ),
               );
               if (result == true) {
@@ -218,15 +234,28 @@ class _HistoryScreenState extends State<HistoryScreen> {
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (service.professionalName != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    service.professionalName!,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
+                if (_currentUser?['userType'] == 'profissional') ...[
+                  if (service.clientName != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      service.clientName!,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
-                  ),
+                  ],
+                ] else ...[
+                  if (service.professionalName != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      service.professionalName!,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ],
                 if (service.description != null && service.description!.isNotEmpty) ...[
                   const SizedBox(height: 4),

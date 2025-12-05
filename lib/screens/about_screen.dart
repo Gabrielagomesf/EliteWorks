@@ -6,6 +6,9 @@ import '../widgets/headers/main_header.dart';
 import '../widgets/drawer/custom_drawer.dart';
 import '../services/auth_service.dart';
 import '../utils/email_launcher.dart';
+import 'privacy_policy_screen.dart';
+import 'terms_of_service_screen.dart';
+import 'contact_screen.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -126,8 +129,34 @@ class AboutScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 32),
+                      _buildSectionTitle('Documentos'),
+                      _buildDocumentLink('Política de Privacidade', Icons.privacy_tip_outlined, () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PrivacyPolicyScreen(),
+                          ),
+                        );
+                      }),
+                      _buildDocumentLink('Termos de Serviço', Icons.description_outlined, () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const TermsOfServiceScreen(),
+                          ),
+                        );
+                      }),
+                      _buildDocumentLink('Contato', Icons.contact_support_outlined, () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ContactScreen(),
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: 32),
                       Text(
-                        '© 2024 ${AppStrings.appName}. Todos os direitos reservados.',
+                        '© ${DateTime.now().year} ${AppStrings.appName}. Todos os direitos reservados.',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           color: AppColors.textTertiary,
@@ -142,6 +171,48 @@ class AboutScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12, top: 8),
+      child: Text(
+        title,
+        style: GoogleFonts.inter(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: AppColors.textPrimary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDocumentLink(String title, IconData icon, VoidCallback onTap) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            icon,
+            color: AppColors.primary,
+            size: 24,
+          ),
+        ),
+        title: Text(
+          title,
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+        onTap: onTap,
+      ),
     );
   }
 

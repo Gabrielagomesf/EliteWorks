@@ -42,5 +42,7 @@ class AppStrings {
   static const String findProfessionals = 'Encontre os melhores profissionais';
   
   static const String officialEmail = 'eliteworkss1@gmail.com';
+  static const String officialPhone = '(19) 99999-9999';
+  static const String officialPhoneFormatted = '5519999999999';
 }
 

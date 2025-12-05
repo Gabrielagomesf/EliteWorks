@@ -8,11 +8,13 @@ import '../models/work_model.dart';
 import '../models/ad_model.dart';
 import '../widgets/headers/main_header.dart';
 import '../widgets/drawer/custom_drawer.dart';
+import '../widgets/buttons/primary_button.dart';
 import '../services/auth_service.dart';
 import '../services/repositories/professional_repository.dart';
 import '../services/repositories/service_repository.dart';
 import '../services/repositories/review_repository.dart';
 import '../services/repositories/ad_repository.dart';
+import 'request_service_screen.dart';
 
 class ProfessionalProfileScreen extends StatefulWidget {
   final String professionalId;
@@ -204,8 +206,58 @@ class _ProfessionalProfileScreenState extends State<ProfessionalProfileScreen>
                     ),
                   ),
                 ),
+                if (_currentUser?['userType'] != 'profissional') _buildRequestButton(),
               ],
             ),
+      floatingActionButton: _currentUser?['userType'] != 'profissional'
+          ? FloatingActionButton.extended(
+              onPressed: () => _navigateToRequestService(),
+              backgroundColor: AppColors.primary,
+              icon: const Icon(Icons.add_task, color: Colors.white),
+              label: Text(
+                'Contratar',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            )
+          : null,
+    );
+  }
+
+  Widget _buildRequestButton() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: PrimaryButton(
+          text: 'Solicitar Serviço',
+          onPressed: _navigateToRequestService,
+        ),
+      ),
+    );
+  }
+
+  void _navigateToRequestService() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RequestServiceScreen(
+          professionalId: widget.professionalId,
+          professionalName: _professionalName ?? widget.professionalName,
+          professionalCategories: _categories.isNotEmpty ? _categories : null,
+        ),
+      ),
     );
   }
 

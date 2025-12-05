@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 import '../../services/auth_service.dart';
+import '../../services/api/user_api_service.dart';
 import '../../screens/home_screen.dart';
 import '../../screens/profile_screen.dart';
 import '../../screens/history_screen.dart';
@@ -12,8 +13,12 @@ import '../../screens/settings_screen.dart';
 import '../../screens/help_screen.dart';
 import '../../screens/about_screen.dart';
 import '../../screens/main_app_screen.dart';
+import '../../screens/professional_dashboard_screen.dart';
+import '../../screens/edit_professional_profile_screen.dart';
+import '../../screens/my_ads_screen.dart';
+import '../../screens/create_work_screen.dart';
 
-class CustomDrawer extends StatelessWidget {
+class CustomDrawer extends StatefulWidget {
   final String? userName;
   final String? userEmail;
   final String? userType;
@@ -26,10 +31,57 @@ class CustomDrawer extends StatelessWidget {
   });
 
   @override
+  State<CustomDrawer> createState() => _CustomDrawerState();
+}
+
+class _CustomDrawerState extends State<CustomDrawer> {
+  String? _profileImageUrl;
+  bool _isLoadingProfile = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileImage();
+  }
+
+  Future<void> _loadProfileImage() async {
+    setState(() {
+      _isLoadingProfile = true;
+    });
+
+    try {
+      final response = await UserApiService.getProfile();
+      if (response['success'] == true && response['user'] != null) {
+        final userData = response['user'] as Map<String, dynamic>;
+        final profileImage = userData['profileImage'] as String?;
+        
+        if (mounted) {
+          setState(() {
+            _profileImageUrl = profileImage;
+            _isLoadingProfile = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isLoadingProfile = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingProfile = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Drawer(
       child: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -73,16 +125,93 @@ class CustomDrawer extends StatelessWidget {
                         context,
                         icon: Icons.person_outline,
                         title: AppStrings.profile,
-                        onTap: () {
+                        onTap: () async {
                           Navigator.pop(context);
-                          Navigator.push(
+                          await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => const ProfileScreen(),
                             ),
                           );
+                          _loadProfileImage();
                         },
                       ),
+                      // Itens específicos para profissionais
+                      if (widget.userType == 'profissional') ...[
+                        _buildMenuItem(
+                          context,
+                          icon: Icons.dashboard_outlined,
+                          title: 'Dashboard',
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ProfessionalDashboardScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildMenuItem(
+                          context,
+                          icon: Icons.campaign_outlined,
+                          title: 'Meus Anúncios',
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const MyAdsScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildMenuItem(
+                          context,
+                          icon: Icons.add_business_outlined,
+                          title: 'Criar Anúncio',
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const CreateWorkScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildMenuItem(
+                          context,
+                          icon: Icons.edit_note_outlined,
+                          title: 'Editar Perfil Profissional',
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const EditProfessionalProfileScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                      // Itens específicos para clientes
+                      if (widget.userType == 'cliente') ...[
+                        _buildMenuItem(
+                          context,
+                          icon: Icons.favorite_outline,
+                          title: AppStrings.favorites,
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const FavoritesScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                       _buildMenuItem(
                         context,
                         icon: Icons.history_outlined,
@@ -93,20 +222,6 @@ class CustomDrawer extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) => const HistoryScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      _buildMenuItem(
-                        context,
-                        icon: Icons.favorite_outline,
-                        title: AppStrings.favorites,
-                        onTap: () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const FavoritesScreen(),
                             ),
                           );
                         },
@@ -183,22 +298,35 @@ class CustomDrawer extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    ImageProvider? avatarImage;
+    
+    if (_profileImageUrl != null && _profileImageUrl!.isNotEmpty && _profileImageUrl!.startsWith('http')) {
+      avatarImage = NetworkImage(_profileImageUrl!);
+    }
+
     return Container(
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 40,
             backgroundColor: Colors.white,
-            child: Icon(
-              Icons.person,
-              size: 50,
-              color: AppColors.primary,
-            ),
+            backgroundImage: avatarImage,
+            child: _isLoadingProfile
+                ? const CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  )
+                : avatarImage == null
+                    ? const Icon(
+                        Icons.person,
+                        size: 50,
+                        color: AppColors.primary,
+                      )
+                    : null,
           ),
           const SizedBox(height: 16),
           Text(
-            userName ?? 'Usuário',
+            widget.userName ?? 'Usuário',
             style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -207,7 +335,7 @@ class CustomDrawer extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            userEmail ?? '',
+            widget.userEmail ?? '',
             style: GoogleFonts.inter(
               fontSize: 14,
               color: Colors.white.withValues(alpha: 0.9),
@@ -221,7 +349,7 @@ class CustomDrawer extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              userType == 'profissional' ? 'Profissional' : 'Cliente',
+              widget.userType == 'profissional' ? 'Profissional' : 'Cliente',
               style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
